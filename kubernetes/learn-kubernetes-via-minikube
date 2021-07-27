@@ -1,0 +1,149 @@
+
+https://kubernetes.io/docs/tutorials/kubernetes-basics/
+
+# Env in a virtual term on their site (bootcamp terminal)
+# Minikibe already installed
+
+minikube version
+minikube start
+
+kubectl version
+kubectl cluster-info
+kubectl get nodes
+
+#
+# Deploy an app
+#
+
+kubectl get nodes --help
+kubectl create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1
+
+kubectl get deployments
+
+#
+# Test proxy (like nc)
+#
+
+echo -e "\n\n\n\e[92mStarting Proxy. After starting it will not output a response. Please click the first Terminal Tab\n"; 
+kubectl proxy
+
+
+# Talk thru proxy to kubernets and get version info
+curl http://localhost:8001/version
+
+# Discover pod name to use for other things
+#   POD == smalest deployable item. May contain side cars and such to support application. TIGHTLY COUBLED.
+#		service  that must run on the same Hardare/Vm/machine. Same host w/ same IP, ports, disk, etc.
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+echo Name of the Pod: $POD_NAME
+
+curl http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME/
+
+# Details of pod, what is running on a node etc can be seem here:
+# 	https://kubernetes.io/docs/tutorials/kubernetes-basics/explore/explore-intro/
+
+#   kubectl get - list resources
+#   kubectl describe - show detailed information about a resource
+#   kubectl logs - print the logs from a container in a pod
+#   kubectl exec - execute a command on a container in a pod
+
+
+kubectl get pods
+kubectl describe pods
+
+# New enviroment so start up the proxy for testing. do you rember how to do that?
+#	Setup pod_NAME variable for ease of use.
+
+
+kubectl logs $POD_NAME 			# shows kubelet logs even # of times container accessed! (use count)
+kubectl exec $POD_NAME -- env		# execute command env in that pod
+kubectl exec -ti $POD_NAME -- bash 	# open bash shell on pod
+
+
+# Kubernetes service == loose coupling between dependent pods (frontend, backend, etc)
+
+# Interactive Tutorial - Exposing Your App
+
+
+kubectl get services		# shows a service named kubernetes exists
+kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080 # new service
+kubectl describe services/kubernetes-bootcamp
+
+
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+
+curl $(minikube ip):$NODE_PORT # not going thru a special proxy this time
+
+kubectl describe deployment
+kubectl get pods -l app=kubernetes-bootcamp
+kubectl get services -l app=kubernetes-bootcamp
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+echo Name of the Pod: $POD_NAM
+
+kubectl label pods $POD_NAME version=v1
+
+kubectl describe pods $POD_NAME
+kubectl get pods -l version=v1
+
+
+# Destroy the service. DEPLOYMENT still running
+kubectl delete service -l app=kubernetes-bootcamp
+kubectl get services
+curl $(minikube ip):$NODE_PORT				# no response
+kubectl exec -ti $POD_NAME -- curl localhost:8080	# still running. Need 2 delete deployment. not just service
+
+# Scale up
+ kubectl get deployments
+kubectl get rs 			# view replica set
+kubectl scale deployments/kubernetes-bootcamp --replicas=4
+kubectl get deployments
+kubectl get pods -o wide
+kubectl describe deployments/kubernetes-bootcamp
+
+# Notice that the name of the ReplicaSet is always formatted as [DEPLOYMENT-NAME]-[RANDOM-STRING]. 
+#			The random string is randomly generated and uses the pod-template-hash as a seed.
+
+# Step 2: Load Balancing
+
+# kubectl describe services/kubernetes-bootcamp
+
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+
+curl $(minikube ip):$NODE_PORT		# run a few times to see hitting different endpoints in teh service since there are 4
+
+
+
+# Step 1: Update the version of the app
+
+kubectl get pods
+kubectl describe pods
+# Replace image and start rollout. How do you canary/test?
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
+kubect get pods
+
+
+# Step 2: Verify an update was completed
+
+kubectl describe services/kubernetes-bootcamp
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+curl $(minikube ip):$NODE_PORT
+kubectl rollout status deployments/kubernetes-bootcamp
+kubectl describe pods
+
+# Step 3: Rollback an update
+
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10
+kubectl get deployments
+kubectl get pods
+kubectl describe pods
+kubectl rollout undo deployments/kubernetes-bootcamp
+kubectl get pods
+kubectl describe pods
+
+
+
+
+
