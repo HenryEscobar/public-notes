@@ -18,4 +18,251 @@ echo \
 sudo apt-get update
 sudo apt-get -y install docker-ce docker-ce-cli containerd.io
 
+# Prep for usage
+ sudo groupadd docker
+ sudo usermod -aG docker $USER
+ newgrp docker  # change to that group instaeadd of logout/login
+ sudo systemctl enable docker.service
+ sudo systemctl enable containerd.service
+ sudo dockerd > dockkerd-$(date +%Y%m%d).out 2>&1 &
+
+# verify installed
+sudo docker run hello-world
+#
+
+
+docker run -d -p 80:80 docker/getting-started	# -d == run in background. forwardp port 80 to 80. docker image
+# Make sure it is in the app subdir w/ the package.json file
+cat > Dockerfile << EOF
+  FROM node:12-alpine
+  RUN apk add --no-cache python g++ make # I had to run this on seperate lines due to error... 
+  WORKDIR /app
+  COPY . .
+  RUN yarn install --production
+  CMD ["node", "src/index.js"]
+EOF
+ 
+docker build -t getting-started .
+
+ docker run -dp 3000:3000 getting-started
+
+# replace container: after update
+docker ps
+docker stop <container-id>
+docker rm <container id>
+# pro-tip to replace two commands above:
+docker rm -f <the-container-id>  # Stop and remove in one line
+docker run -dp 3000:3000 getting-started
+
+# visit docker hub and create a repo
+# https://hub.docker.com/
+# docker push hankinnyc/tutorial:tagname created
+
+docker push hankinnyc/getting-started:tagname # error. no image. need to tag image first!
+# login to docker hub
+docker login -u  hankinnyc
+
+docker tag getting-started hankinnyc/getting-started
+docker push hankinnyc/getting-started
+
+###
+## nopw to the lab to pl;ay?
+#
+# Neat site
+#https://labs.play-with-docker.com/
+
+docker run -dp 3000:3000 hankinnyc/getting-started
+
+
+# Persistant storage
+docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+
+# docker ps to get name:
+# shell on running docker container
+docker exec -ti <container_name> /bin/bash
+
+docker exec <container-id> cat /data.txt
+
+# named volumes
+docker volume create todo-db
+# dockr rm -f old container since not using a named volume/persistant data
+docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started # -v == volume mount
+
+# pro-tip many volume drivers liek nfs/sft/netapp to support other backends besides local disk
+
+docker volume inspect todo-db
+
+
+# Dev nmode container (for code development and rapid changes)
+#		mount as a volome the pwd/app to /app in teh docker container
+docker run -dp 3000:3000 \
+    -w /app -v "$(pwd):/app" \
+    node:12-alpine \
+    sh -c "yarn install && yarn run dev"
+
+
+
+docker logs -f <container-id>
+# hack away and when done: to build new container
+docker build -t getting-started .
+
+
+$ docker push docker/getting-started
+docker tag getting-started YOUR-USER-NAME/getting-started
+docker push YOUR-USER-NAME/getting-started
+
+
+# very cool site: http://play-with-docker.com/
+docker run -dp 3000:3000 YOUR-USER-NAME/getting-started
+
+docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+cat /data.txt
+docker exec <container-id> cat /data.txt
+docker run -it ubuntu ls /
+
+
+# persisting data
+docker volume create todo-db
+docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started
+docker ps
+docker rm -f <id>
+
+#
+#Pro-tip 
+# While named volumes and bind mounts (which we'll talk about in a minute) are the two main types of volumes supported by a default Docker engine installation, there are many volume driver plugins available to support NFS, SFTP, NetApp, and more! This will be especially important once you start running containers on multiple hosts in a clustered environment with Swarm, Kubernetes, etc.
+ 
+docker volume inspect todo-db
+
+## Dev mode container for easy dev / reload
+docker run -dp 3000:3000 \
+    -w /app -v "$(pwd):/app" \
+    node:12-alpine \
+    sh -c "yarn install && yarn run dev"
+
+docker logs -f <container-id>
+
+# Stop- conatiner and push out a new image:
+docker build -t getting-started .
+
+
+# Myusql db time
+#
+docker build -t getting-started 
+
+docker run -d \
+    --network todo-app --network-alias mysql \
+    -v todo-mysql-data:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    -e MYSQL_DATABASE=todos \
+    mysql:5.7
+
+
+docker exec -it <mysql-container-id> mysql -p
+mysql> SHOW DATABASES;
+
+
+
+# Cool network tool thing (no hping. :-()
+#
+docker run -it --network todo-app nicolaka/netshoot
+dig mysql # you chose this dns name when you started up mysql w/ --network-alias
+
+
+# hack w/ env vars. don't do this in prod:
+#    https://diogomonica.com/2017/03/27/why-you-shouldnt-use-env-variables-for-secret-data/
+#
+docker run -dp 3000:3000 \
+  -w /app -v "$(pwd):/app" \
+  --network todo-app \
+  -e MYSQL_HOST=mysql \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASSWORD=secret \
+  -e MYSQL_DB=todos \
+  node:12-alpine \
+  sh -c "yarn install && yarn run dev"
+
+
+ docker logs <container-id>
+docker exec -it <mysql-container-id> mysql -p todos
+select * from todo_items;
+
+
+# Using docker compose
+#
+## Translate these to this 'micro-service' defiition
+#   docker run -dp 3000:3000 -w /app -v "$(pwd):/app" --network todo-app MYSQL_HOST=mysql \
+#      -e MYSQL_USER=root -e MYSQL_PASSWORD=secret -e MYSQL_DB=todos node:12-alpine \ 
+#      sh -c "yarn install && yarn run dev"
+#   docker run -d --network todo-app --network-alias mysql -v todo-mysql-data:/var/lib/mysql \
+#	-e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=todos mysql:5.7
+
+
+
+cat docker-compose.yml << EOF
+version: "3.7"
+
+services:
+  app:
+    image: node:12-alpine
+    command: sh -c "yarn install && yarn run dev"
+    ports:
+      - 3000:3000
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+      MYSQL_DB: todos
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - todo-mysql-data:/var/lib/mysql
+    environment: 
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: todos
+
+volumes:
+  todo-mysql-data:
+
+<< EOF
+
+# kill runnning containers via:
+docker rm -f <container_id>
+
+
+docker-compose up -d ## magic!
+docker-compose logs -f
+docker-compose down
+#named volumes in your compose file are NOT removed with docker-compose down. add --volumes flag 2 do so
+#
+
+
+# Best practices: http://localhost/tutorial/image-building-best-practices/
+#
+
+docker scan getting-started
+docker image history getting-started
+docker image history --no-trunc getting-started
+
+# When defining order of stuff try to minimize change impacts. -> maximize layer caching
+# #  eg. load package.json first, then install tsince those change less
+# use .dockerignore to skip things like node_modules
+docker build -t getting-started .
+
+# multistage build:
+# FROM maven AS build
+#WORKDIR /app
+#COPY . .
+#RUN mvn package
+
+#FROM tomcat
+#COPY --from=build /app/target/file.war /usr/local/tomcat/webapps
+
+#In this example, we use one stage (called build) to perform the actual Java build using Maven. In the second stage (starting at FROM tomcat), we copy in files from the build stage. The final image is only the last stage being created (which can be overridden using the --target flag).
+#
+#
+#
 

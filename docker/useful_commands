@@ -1,0 +1,106 @@
+docker container ls --all ## show all containers running or not
+
+
+docker run -d -p 80:80 docker/getting-started	# -d == run in background. forwardp port 80 to 80. docker image
+docker build -t getting-started .
+docker run -dp 3000:3000 getting-started
+docker ps
+docker stop <container-id>
+docker rm <container id>
+# pro-tip to replace two commands above:
+docker rm -f <the-container-id>  # Stop and remove in one line
+
+docker push hankinnyc/getting-started:tagname # error. no image. need to tag image first!
+# login to docker hub
+docker login -u  hankinnyc
+
+docker tag getting-started hankinnyc/getting-started
+docker push hankinnyc/getting-started
+# Persistant storage
+docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+
+# docker ps to get name:
+# shell on running docker container
+docker exec -ti <container_name> /bin/bash
+docker exec <container-id> cat /data.txt
+# named volumes
+docker volume create todo-db
+# dockr rm -f old container since not using a named volume/persistant data
+docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started # -v == volume mount docker volume inspect todo-db
+docker run -dp 3000:3000 -w /app -v "$(pwd):/app" node:12-alpine sh -c "yarn install && yarn run dev" 
+
+docker logs -f <container-id>
+# hack away and when done: to build new container
+
+$ docker push docker/getting-started
+docker tag getting-started hankinnyc/getting-started
+docker push hankinnyc/getting-started
+
+
+# very cool site: http://play-with-docker.com/
+docker run -dp 3000:3000 hankinnyc/getting-started
+
+docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+cat /data.txt
+docker exec <container-id> cat /data.txt
+docker run -it ubuntu ls /
+
+
+# persisting data
+docker volume create todo-db
+docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started
+docker ps
+docker rm -f <id>
+
+#
+#Pro-tip 
+# While named volumes and bind mounts (which we'll talk about in a minute) are the two main types of volumes supported by a default Docker engine installation, there are many volume driver plugins available to support NFS, SFTP, NetApp, and more! This will be especially important once you start running containers on multiple hosts in a clustered environment with Swarm, Kubernetes, etc.
+ 
+docker volume inspect todo-db
+
+## Dev mode container for easy dev / reload
+docker run -dp 3000:3000 -w /app -v "$(pwd):/app" node:12-alpine sh -c "yarn install && yarn run dev" 
+docker logs -f <container-id>
+
+docker run -d \
+    --network todo-app --network-alias mysql \
+    -v todo-mysql-data:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    -e MYSQL_DATABASE=todos \
+    mysql:5.7
+
+
+docker exec -it <mysql-container-id> mysql -p
+mysql> SHOW DATABASES;
+
+# Cool network tool thing (no hping. :-()
+#
+docker run -it --network todo-app nicolaka/netshoot
+dig mysql # you chose this dns name when you started up mysql w/ --network-alias
+
+
+# hack w/ env vars. don't do this in prod:
+#    https://diogomonica.com/2017/03/27/why-you-shouldnt-use-env-variables-for-secret-data/
+#
+docker run -dp 3000:3000 \
+  -w /app -v "$(pwd):/app" \
+  --network todo-app \
+  -e MYSQL_HOST=mysql \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASSWORD=secret \
+  -e MYSQL_DB=todos \
+  node:12-alpine \
+  sh -c "yarn install && yarn run dev"
+
+
+docker logs <container-id>
+docker exec -it <mysql-container-id> mysql -p todos
+select * from todo_items;
+
+docker-compose up -d ## magic!
+docker-compose logs -f
+docker-compose down
+docker scan getting-started
+docker image history getting-started
+docker image history --no-trunc getting-started
+
