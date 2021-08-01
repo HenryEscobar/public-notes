@@ -1,5 +1,8 @@
 docker container ls --all ## show all containers running or not
 
+docker run -it --network todo-app nicolaka/netshoot
+
+
 
 docker run -d -p 80:80 docker/getting-started	# -d == run in background. forwardp port 80 to 80. docker image
 docker build -t getting-started .

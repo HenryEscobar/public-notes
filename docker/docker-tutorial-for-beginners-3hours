@@ -1,0 +1,113 @@
+#Video: https://www.youtube.com/watch?v=3c-iBn73dDE # great video
+
+docker run postgres:9.6
+docker ps
+
+
+Docker image === package and such . artificats and dockerfiles
+docker container == Application actually running
+
+A container is a running or stopped image 
+
+Basic docker commands
+docker pull  		: Pull image from repostorty 
+docker start		: work with containers not images. 
+docker run		: docker run -d <image>:tag    # Pull and run it. tag is option default == latest
+docker stop		:
+docker ps		: docker ps -a  # show all running or not.
+
+
+Other commands
+docker images		: list images that are cached
+Restart a container	: docker ps; grab ID; docker stop <id> ; docker start <same_id> 
+
+
+Docker useful command examples
+docker run -dp 6000:6379 redis 	# startup redis image and map ports (-p) and detached/daemon (-d/)
+dorck run -d -p6001:6379 --name redis-4.0 redis:4.0 # startup redis:4.0 w/ container name of redis-4.0
+
+docker logs <id>		: see logs (da). id can be ID or Name
+docker exec -it /bin/bash	: docker exec interactive terminal
+
+# 
+# Preping for development workflow / Ci
+#
+Code -> Commit -> Git -> Jenkins -> Docker -> Docker Repo (private) -> Dev/staging Server box
+
+docker pull mongo
+docker pull mongo-express
+# net to setup a shared network betwewen them
+docket network ls
+docker network create mongo-network
+# Read readme on docuker hub to know how to setup stuff and env variables
+docker run -dp 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password \
+		--name mongodb --net mongo-network mongo
+
+docker run -dp 8081:8081 -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin \
+		-e ME_CONFIG_MONGODB_ADMINPASSWORD=password  \
+		-e ME_CONFIG_MONGODB_SERVER=mongodb \
+		--name mongo-express --net mongo-network mongo-express
+
+
+# Now with docker-compose:
+# Assumes you want same shared network for all the thigns and makes it for you
+#
+cat << EOF
+services:
+    mongodb:
+        image: mongo
+        ports:
+            - 27017:27017
+        environment:
+            MONGO_INITDB_ROOT_USERNAME=admin 
+            MONGO_INITDB_ROOT_PASSWORD=password
+    mongo-express:
+        image: mongo-express
+        restart: always         # need restart since this will die if mongodb not up
+        ports:
+            - 8081:8081
+        environment: 
+            ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+            ME_CONFIG_MONGODB_ADMINPASSWORD=password 
+            ME_CONFIG_MONGODB_SERVER=mongodb
+EOF > mongo-docker-compose.yaml
+
+docker-compose -f mongo-docker-compose.yaml up
+
+
+
+## 
+####
+#Build the app into an IMAGE
+#
+
+cd app
+cat << EOF
+FROM node:alpine
+
+ENV MONGO_DB_USERNAME=admin \
+    MONGO_DB_PWD=password
+
+RUN mkdir -p /home/app
+WORKDIR /home/app
+COPY . /home/app
+RUN npm install
+
+
+CMD ["node", "/home/app/server.js"]
+EOF > Dockerfile
+
+# bad image?
+docker images
+docker rmi <Image ID>
+# shoot! it's a stopped container..
+docker ps -a | grep <thing looking for>
+docker rm <container_id>
+# now image deletion will work
+docker rmi <image_id>
+
+# Build find out of Dockerfile in PWD
+docker build -t my-app:1.0 .
+
+$ docker exec -it 9f81cf9a17fa sh 
+docker exec -it <container-id> sh
