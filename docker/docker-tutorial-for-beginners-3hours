@@ -111,3 +111,41 @@ docker build -t my-app:1.0 .
 
 $ docker exec -it 9f81cf9a17fa sh 
 docker exec -it <container-id> sh
+
+
+
+# Private remos can get very interesrting....
+#
+# use tags to include the registery address/domain to private repos
+docker images 		#	 will list full repo when not using default dockerhub
+docker push <full registory address>
+
+
+#  aws ecr stuff overivew and prod rollout overview
+#
+#
+#  #docker compuse will abstract away port stuff if you want to as well... need to learn more.
+#
+#
+# docker perseistnat storag / volumes
+# 	mount physical host filesystem to container system
+#
+# 3 typ3s of voules:
+# 	-v /home/mount/data:/var/lib/mysql/data		# Host volumes
+#
+#	anonymous volumes; /var/lib/docker/volujmes/random-hash/_data
+# 		-v /var/lib/mysql/data				# docker makes it: 
+#
+# 	PREFERED:::  Named volumes : /var/lib/dockers/volumes/random-has/_data
+# 		-v name:/var/lib/mysql/data	
+#
+#
+#in docker compose : volumes: -db-data:/var/lib/mysql/data
+# define volumes in cdocker-compose file
+#
+# real location on host
+#	c:\programData\docker\volumes
+#	/var/lib/docker/volumes - linux and mac (docker on mac is a linux vm... )
+#		mac : more magical
+
+
