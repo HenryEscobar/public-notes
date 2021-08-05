@@ -1,7 +1,11 @@
 #Video: https://www.youtube.com/watch?v=3c-iBn73dDE # great video
 
 docker run postgres:9.6
-docker ps
+docker ps -a
+
+ docker run --rm -it ubuntu /bin/bash    			# shell on an ubuntu docker container. remove it when you exit
+ docker run -it --network todo-app nicolaka/netshoot		# Need to fork and make my own!
+
 
 
 Docker image === package and such . artificats and dockerfiles
