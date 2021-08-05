@@ -1,0 +1,10 @@
+#
+# Great video! Teaches you how containers work by writing a docker clone in go.
+# https://www.youtube.com/watch?v=8fi7uSYlOdc
+
+
+# all about name spaces and limits set.
+checj out /etc/fs/cgroup
+check /etc/fs/cgroup/memory/docker/<docker_id> to see memory limits
+
+Talks about how you can limit # of cgourps by setting 
