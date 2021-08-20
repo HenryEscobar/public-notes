@@ -1,0 +1,7 @@
+# basic way:
+python3 -m venv ./venv
+
+# More advanced:
+# pipenv
+
+

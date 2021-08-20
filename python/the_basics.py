@@ -1,12 +1,17 @@
-
 # from the_basics import *   
 # dir(foobar) and type(foobar) are your friends
+#
 # Examples of ways to print options for a class/variable
 # dir(set) 
 # print(*dir(set), sep="\n")
 # print(' '.join(str(x) for x in dir(set)))
 # print(' '.join(map(str,dir(list))))
 # print(('\n'.join(dir(list))))
+#
+# # Utilities
+# help('modules')
+# pydoc modules
+# dir(dict)
 
 # print("something {x} and {y}".format(x=1,y="foo"))
 # print(f"{num} something {x * y}")   # Not sure if fan of this format.
@@ -23,6 +28,9 @@ my_dict = { 'key1': 'value1', 'key2': 'value2' }  # print(my_dict['key1'])
         
 def function_name(x,y="foo"):
     return(x + y)
+
+def hello_world():
+    print("hi")
 
 def pass_arg_as_tuple(*arg):  # unlmited args. each one is a tuple
     print(type(arg))
