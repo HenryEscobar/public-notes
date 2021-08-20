@@ -1,0 +1,6 @@
+docker run --name repo alpone/git clone https://githubn.com/docker/getting-started.git 
+docker cp repo:/get/getting-started/ .
+cd getting-started
+docker build -t docker101tutorial .
+
+
