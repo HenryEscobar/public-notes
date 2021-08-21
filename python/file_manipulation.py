@@ -13,4 +13,11 @@ def read_file(filename):
             # do work
             print(line)
 
-# Working with strings
+
+# need exception handeling
+def write_file(filename,contents,mode="a"):
+    fh = open(filename, mode)
+
+    for line in contents:
+        fh.write(line)
+    fh.close()
