@@ -1,0 +1,45 @@
+
+# zip mergers iterables such as lists into a tupple of things.
+
+Examples:
+
+        
+def rotateImage(a):
+    return(list(zip(*a[::-1])))
+    
+"""
+                    a = [[1, 2, 3],     [4, 5, 6],     [7, 8, 9]]
+            a[::-1]   = [[7, 8, 9], [4, 5, 6], [1, 2, 3]]
+     zip above to get ->> 
+     rotateImage(a) =   [[7, 4, 1],     [8, 5, 2],     [9, 6, 3]]
+     
+"""
+
+
+Another exmaple:
+
+
+employee_numbers = [2, 9, 18, 28]
+employee_names = ["Candice", "Ava", "Andrew", "Lucas"]
+
+zipped_values = zip(employee_names, employee_numbers)
+zipped_list = list(zipped_values)
+
+print(zipped_list)
+
+Our zip function returns the following:
+
+[('Candice', 2), ('Ava', 9), ('Andrew', 18), ('Lucas', 28)]
+
+
+
+employee_numbers = [2, 9, 18, 28]
+employee_names = ["Candice", "Ava", "Andrew", "Lucas"]
+
+for name, number in zip(employee_names, employee_numbers):
+	print(name, number)
+
+Candice 2
+Ava 9
+Andrew 18
+Lucas 28
