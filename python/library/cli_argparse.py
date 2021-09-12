@@ -1,6 +1,8 @@
 # argparse template
 # RTFM: https://docs.python.org/3/library/argparse.html
-
+#
+# see notes/click for a click example
+#
 import argparse
 import sys
 
