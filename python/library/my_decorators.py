@@ -1,8 +1,9 @@
 #
-# # My cool decoratrors to abuse
+# # My cool decorators to abuse
 #
 import functools
 import time
+
 
 def debug(func):
     """Print the function signature and return value"""

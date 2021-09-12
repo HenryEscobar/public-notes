@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     if type(args.filename) != list:
         print("-=" * 15, " STDIN ", "=-" * 15)
-    
+
     for f in args.filename:
         if type(f) == str:
             print(f.rstrip())
@@ -19,4 +19,3 @@ if __name__ == '__main__':
             print("-=" * 15, f.name, "=-" * 15)
             for line in f:
                 print(line.rstrip())
-
